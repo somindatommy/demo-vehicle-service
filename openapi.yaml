@@ -1,56 +1,29 @@
-openapi: 3.0.1
+openapi: 3.1.0
 info:
   title: OpenAPI definition
   version: v0
 servers:
-- url: http://localhost:8080
-  description: Generated server url
+  - url: http://localhost:8080
+    description: Generated server url
 paths:
-  /api/employees/{employeeId}:
-    put:
+  /api/v1/payments:
+    get:
       tags:
-      - employee-controller
-      operationId: updatedEmployee
-      parameters:
-      - name: employeeId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmployeeRequest'
-        required: true
+        - payment-controller
+      operationId: getAllPayment
       responses:
-        "200":
-          description: OK
+        "500":
+          description: Internal Server Error
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/Employee'
-    delete:
-      tags:
-      - employee-controller
-      operationId: deleteEmployee
-      parameters:
-      - name: employeeId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        "204":
-          description: No Content
-  /api/employees:
-    get:
-      tags:
-      - employee-controller
-      operationId: getEmployees
-      responses:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "200":
           description: OK
           content:
@@ -58,44 +31,170 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Employee'
+                  $ref: "#/components/schemas/Payment"
     post:
       tags:
-      - employee-controller
-      operationId: createEmployee
+        - payment-controller
+      operationId: payUser
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmployeeRequest'
+              $ref: "#/components/schemas/PaymentRequest"
         required: true
       responses:
+        "500":
+          description: Internal Server Error
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "201":
           description: Created
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/Employee'
+                $ref: "#/components/schemas/PaymentInitiatorResponse"
+  /api/v1/payments/{id}:
+    get:
+      tags:
+        - payment-controller
+      operationId: getPaymentById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "500":
+          description: Internal Server Error
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Payment"
+  /api/v1/payments/status/{status}:
+    get:
+      tags:
+        - payment-controller
+      operationId: getPaymentsByStatus
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "500":
+          description: Internal Server Error
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+  /api/v1/payments/authdata:
+    get:
+      tags:
+        - payment-controller
+      operationId: getAuthentication
+      responses:
+        "500":
+          description: Internal Server Error
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "200":
+          description: OK
 components:
   schemas:
-    EmployeeRequest:
+    ErrorResponse:
       type: object
       properties:
-        firstName:
+        code:
           type: string
-        lastName:
+        message:
           type: string
-        email:
+        description:
           type: string
-    Employee:
+    PaymentRequest:
       type: object
       properties:
-        id:
-          type: integer
-          format: int32
-        firstName:
+        initiator:
           type: string
-        lastName:
+        receiver:
           type: string
-        email:
+        amount:
+          type: number
+          format: double
+    PaymentInitiatorResponse:
+      type: object
+      properties:
+        paymentId:
           type: string
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PROCESSING
+            - SUCCESS
+            - FAILED
+    Payment:
+      type: object
+      properties:
+        paymentId:
+          type: string
+        initiatorId:
+          type: string
+        receiverId:
+          type: string
+        amount:
+          type: number
+          format: double
+        initiatedTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PROCESSING
+            - SUCCESS
+            - FAILED
